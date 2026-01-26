@@ -1,0 +1,13 @@
+{
+  "name": "github-discussion-contact",
+  "version": "1.0.0",
+  "description": "Contact form backend using GitHub App Installations",
+  "main": "index.js",
+  "dependencies": {
+    "@octokit/auth-app": "^7.1.1",
+    "@octokit/rest": "^21.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "author": "Automation Expert",
+  "license": "All rights reserved"
+}

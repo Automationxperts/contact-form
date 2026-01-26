@@ -6,9 +6,9 @@
 
 const { createAppAuth } = require("@octokit/auth-app");
 const { Octokit } = require("@octokit/rest");
+const fetch = require("node-fetch"); // Use the installed dependency
 
 exports.handler = async (event) => {
-  // Only allow POST requests
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -16,18 +16,17 @@ exports.handler = async (event) => {
   try {
     const { title, body } = JSON.parse(event.body);
 
-    // 1. Initialize the GitHub App Auth
+    // 1. Initialize Auth
     const auth = createAppAuth({
       appId: process.env.GH_APP_ID,
       privateKey: process.env.GH_PRIVATE_KEY.replace(/\\n/g, '\n'),
       installationId: process.env.GH_INSTALLATION_ID,
     });
 
-    // 2. Get an Installation Access Token
+    // 2. Get Token
     const { token } = await auth({ type: "installation" });
 
-    // 3. Use GraphQL to create the discussion
-    // Using fetch-style or Octokit to hit the GraphQL endpoint
+    // 3. Post to GraphQL
     const graphqlResponse = await fetch("https://api.github.com/graphql", {
       method: "POST",
       headers: {
@@ -52,15 +51,19 @@ exports.handler = async (event) => {
 
     const result = await graphqlResponse.json();
 
+    if (result.errors) {
+        throw new Error(result.errors[0].message);
+    }
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Success", id: result.data.createDiscussion.discussion.id }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Success" }),
     };
   } catch (error) {
-    console.error(error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Failed to submit to GitHub" }),
+      body: JSON.stringify({ error: error.message }),
     };
   }
 };
