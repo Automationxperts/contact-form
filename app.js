@@ -1,43 +1,36 @@
 /**
- * GitConnect Professional Engine
+ * GitConnect Navigation & Form Logic
  * © 2026 Automation Expert. All rights reserved.
  */
 
-// 1. Navigation Router
 const router = {
     navigate(viewId) {
+        // Reset all views
         document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-        document.getElementById(`view-${viewId}`).classList.remove('hidden');
-        window.scrollTo(0, 0);
-    }
-};
+        
+        // Show selected view
+        const targetView = document.getElementById(`view-${viewId}`);
+        targetView.classList.remove('hidden');
 
-// 2. Theme Manager
-const themeManager = {
-    set(mode) {
-        const root = document.documentElement;
-        if (mode === 'system') {
-            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            root.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        } else {
-            root.setAttribute('data-theme', mode);
+        // Reset the contact form state if navigating back to contact
+        if (viewId === 'contact') {
+            document.getElementById('contact-form').classList.remove('hidden');
+            document.getElementById('success-view').classList.add('hidden');
         }
-        localStorage.setItem('preferred-theme', mode);
-    },
-    init() {
-        const saved = localStorage.getItem('preferred-theme') || 'system';
-        this.set(saved);
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 };
 
-// 3. Form Handling
+// Form Submission Logic
 document.getElementById('contact-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submit-btn');
-    const originalText = btn.innerHTML;
-    
+    const form = document.getElementById('contact-form');
+    const successView = document.getElementById('success-view');
+
     btn.disabled = true;
-    btn.innerHTML = 'Establishing Secure Connection...';
+    btn.textContent = 'Sending...';
 
     const payload = {
         name: document.getElementById('user_name').value,
@@ -47,23 +40,25 @@ document.getElementById('contact-form').addEventListener('submit', async (e) => 
     };
 
     try {
-        const response = await fetch('/api/github-submit', {
+        const response = await fetch('/.netlify/functions/github-submit', {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-            document.getElementById('contact-form').classList.add('hidden');
-            document.getElementById('success-view').classList.remove('hidden');
+            // THE FIX: Hide the form and show the success card
+            form.classList.add('hidden');
+            successView.classList.remove('hidden');
         } else {
-            throw new Error('API Rejection');
+            throw new Error('Server Error');
         }
     } catch (err) {
-        alert('Network Error. Please try again.');
+        alert('Submission failed. Please check your connection.');
         btn.disabled = false;
-        btn.innerHTML = originalText;
+        btn.textContent = 'Send Message';
     }
 });
 
-// Initialize
+// Initialize Theme
 themeManager.init();
