@@ -1,67 +1,69 @@
 /**
- * Project: GitHub Contact Backend
- * Author: Automation Expert
- * © 2026 All rights reserved.
+ * GitConnect Professional Engine
+ * © 2026 Automation Expert. All rights reserved.
  */
 
+// 1. Navigation Router
 const router = {
-    // Basic SPA routing logic
-    navigate: function(viewId) {
-        document.querySelectorAll('.view').forEach(view => {
-            view.classList.add('hidden');
-        });
+    navigate(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
         document.getElementById(`view-${viewId}`).classList.remove('hidden');
-        
-        // Reset form if navigating back to contact
-        if (viewId === 'contact') {
-            document.getElementById('form-container').classList.remove('hidden');
-            document.getElementById('success-view').classList.add('hidden');
-            document.getElementById('contact-form').reset();
-        }
+        window.scrollTo(0, 0);
     }
 };
 
+// 2. Theme Manager
+const themeManager = {
+    set(mode) {
+        const root = document.documentElement;
+        if (mode === 'system') {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        } else {
+            root.setAttribute('data-theme', mode);
+        }
+        localStorage.setItem('preferred-theme', mode);
+    },
+    init() {
+        const saved = localStorage.getItem('preferred-theme') || 'system';
+        this.set(saved);
+    }
+};
+
+// 3. Form Handling
 document.getElementById('contact-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const originalText = btn.innerHTML;
     
-    const submitBtn = document.getElementById('submit-btn');
-    const subject = document.getElementById('subject').value;
-    const message = document.getElementById('message').value;
+    btn.disabled = true;
+    btn.innerHTML = 'Establishing Secure Connection...';
 
-    // UI Feedback
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Processing Auth & Sending...";
+    const payload = {
+        name: document.getElementById('user_name').value,
+        email: document.getElementById('user_email').value,
+        type: document.getElementById('inquiry_type').value,
+        body: document.getElementById('user_message').value
+    };
 
     try {
-        /**
-         * We call your serverless function (e.g., Netlify/Vercel)
-         * This function handles the GitHub App JWT and Installation Token
-         */
-        const response = await fetch('/.netlify/functions/github-submit', {
+        const response = await fetch('/api/github-submit', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title: subject,
-                body: message
-            })
+            body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-            // BLIND UI: Completely hide the form and show success
-            document.getElementById('form-container').classList.add('hidden');
+            document.getElementById('contact-form').classList.add('hidden');
             document.getElementById('success-view').classList.remove('hidden');
         } else {
-            throw new Error('Submission failed');
+            throw new Error('API Rejection');
         }
-
-    } catch (error) {
-        alert("There was an error connecting to the GitHub API. Please try again.");
-        console.error(error);
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Submit via GitHub";
+    } catch (err) {
+        alert('Network Error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 });
 
-// Initialize to Index page
-window.onload = () => router.navigate('index');
+// Initialize
+themeManager.init();
