@@ -48,7 +48,7 @@ export const handler = async (event) => {
 
     // 5. Construct the comment body
     // We include the sender's info inside the comment since it's all in one thread now
-    const commentBody = `### New Submission\n**From:** ${name} (${email})\n**Message:**\n${body}`;
+    const commentBody = `**Name:** ${name} **Email:** (${email})\n**Message:**\n${body}`;
 
     // 6. Execute GraphQL Mutation: addDiscussionComment
     const graphqlResponse = await fetch("https://api.github.com/graphql", {
