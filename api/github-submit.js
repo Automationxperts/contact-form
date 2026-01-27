@@ -29,9 +29,11 @@ export default async function handler(req, res) {
       url,
     });
   } catch (error) {
-    console.error("API Error:", error);
-    return res.status(400).json({
-      error: error.message,
-    });
+  console.error("API Error FULL:", error);
+
+  return res.status(500).json({
+    error: error.message,
+    stack: error.stack,
+  });
   }
 }
