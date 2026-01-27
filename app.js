@@ -59,7 +59,6 @@ const router = {
 // 2. Triple-State Theme Management (System/Light/Dark)
 const themeManager = {
     init() {
-        // Default to 'system' if no preference is saved
         const savedTheme = localStorage.getItem('theme') || 'system';
         this.apply(savedTheme);
     },
@@ -86,7 +85,6 @@ const themeManager = {
 
         localStorage.setItem('theme', mode);
         
-        // Update the theme toggle icon dynamically
         const themeIcon = document.querySelector('#theme-btn i');
         if (themeIcon && window.lucide) {
             themeIcon.setAttribute('data-lucide', iconName);
@@ -95,7 +93,6 @@ const themeManager = {
     }
 };
 
-// Listen for OS theme changes if the app is in 'system' mode
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (localStorage.getItem('theme') === 'system') {
         themeManager.apply('system');
@@ -113,9 +110,10 @@ const setupForm = () => {
         const submitBtn = document.getElementById('submit-btn');
         const originalText = submitBtn.innerText;
         
-        // Enter Loading State
+        // LOCK UI: Enter Loading State
         submitBtn.disabled = true;
         submitBtn.innerText = 'Transmitting...';
+        submitBtn.style.opacity = '0.7';
 
         const payload = {
             name: document.getElementById('user_name').value,
@@ -124,28 +122,48 @@ const setupForm = () => {
             body: document.getElementById('user_message').value
         };
 
+        // Create a 15-second timeout to prevent the button being stuck on "Transmitting" forever
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         try {
             const response = await fetch('/.netlify/functions/github-submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: controller.signal
             });
 
             if (response.ok) {
+                // Success Transition
                 document.getElementById('contact-ui').classList.add('hidden');
                 document.getElementById('success-ui').classList.remove('hidden');
                 if (window.lucide) window.lucide.createIcons();
             } else {
+                // Server responded with an error (e.g. 400 or 500)
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || 'Submission rejected by server');
+                throw new Error(errorData.error || `Server Error: ${response.status}`);
             }
 
         } catch (error) {
             console.error('Submission Error:', error);
-            alert(`Oops! ${error.message}. Please check your connection.`);
             
+            let message = "Please check your connection.";
+            if (error.name === 'AbortError') {
+                message = "The request timed out. Netlify function might be cold-starting.";
+            } else if (error.message) {
+                message = error.message;
+            }
+
+            alert(`Notice: ${message}`);
+
+            // UNLOCK UI: Re-enable the button on failure
             submitBtn.disabled = false;
             submitBtn.innerText = originalText;
+            submitBtn.style.opacity = '1';
+
+        } finally {
+            clearTimeout(timeoutId);
         }
     });
 };
@@ -155,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
     themeManager.init();
     setupForm();
     
-    // Check URL hash for direct deep-linking, otherwise default to 'home'
     const hash = window.location.hash.replace('#', '');
     const validViews = ['home', 'features', 'contact'];
     const initialView = validViews.includes(hash) ? hash : 'home';

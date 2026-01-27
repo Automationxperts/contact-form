@@ -360,6 +360,12 @@ textarea { min-height: 120px; resize: vertical; }
     transform: translateY(-1px);
 }
 
+#submit-btn:disabled {
+    background: var(--text-muted);
+    filter: grayscale(1);
+    transition: 0.3s;
+}
+
 /* Success Card Styling */
 #success-ui {
     text-align: center;
