@@ -1,110 +1,241 @@
 /**
- * Project: GitConnect Branded UI
+ * Project: GitConnect Enterprise UI
  * © 2026 Automation Expert. All rights reserved.
  */
 
+/* 1. Design Tokens */
 :root {
-    --brand-primary: #0070f3;
-    --brand-gradient: linear-gradient(135deg, #0070f3 0%, #00dfd8 100%);
+    --brand-blue: #0070f3;
+    --brand-cyan: #00dfd8;
+    --brand-gradient: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-cyan) 100%);
+    
+    /* Light Mode */
     --bg: #ffffff;
     --text: #171717;
-    --surface: #f5f5f7;
-    --border: #e5e5e5;
-    --nav-bg: rgba(255, 255, 255, 0.85);
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --text-muted: #666666;
+    --surface: #fafafa;
+    --border: #eaeaea;
+    --nav-bg: rgba(255, 255, 255, 0.8);
+    --shadow: 0 4px 14px 0 rgba(0,0,0,0.1);
 }
 
 [data-theme="dark"] {
-    --bg: #0a0a0a;
-    --text: #ededed;
-    --surface: #1a1a1a;
-    --border: #2e2e2e;
-    --nav-bg: rgba(10, 10, 10, 0.85);
+    /* Dark Mode */
+    --bg: #000000;
+    --text: #ffffff;
+    --text-muted: #888888;
+    --surface: #111111;
+    --border: #333333;
+    --nav-bg: rgba(0, 0, 0, 0.8);
+    --shadow: 0 4px 14px 0 rgba(0,0,0,0.5);
 }
 
-body { 
-    background: var(--bg); 
-    color: var(--text); 
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    line-height: 1.6;
+/* 2. Base Reset */
+* {
     margin: 0;
-    overflow-x: hidden;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* Structural Fixes */
-.view {
-    min-height: 80vh;
-    padding: 60px 20px;
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    transition: background 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
 }
 
 .hidden { display: none !important; }
 
-/* Navbar */
+/* 3. Navigation */
 .navbar {
-    position: sticky; top: 0; z-index: 1000;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 0.75rem 5%; background: var(--nav-bg);
-    backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 5%;
+    background: var(--nav-bg);
+    backdrop-filter: saturate(180%) blur(10px);
+    border-bottom: 1px solid var(--border);
 }
 
-/* Feature Grid Fix */
-.feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    width: 100%;
-    margin-top: 50px;
-}
-
-.feature-card {
-    background: var(--surface);
-    padding: 40px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    transition: var(--transition);
-}
-
-/* Contact & Success Message Logic */
-.contact-container {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.glass-form, .success-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 40px;
-    border-radius: 24px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    width: 100%;
-}
-
-.success-card {
-    text-align: center;
-    animation: scaleUp 0.4s ease-out;
-}
-
-@keyframes scaleUp {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-/* Buttons */
-.btn-primary {
-    background: var(--brand-primary);
-    color: white;
-    border: none;
-    padding: 14px 28px;
-    border-radius: 12px;
-    font-weight: 600;
+.logo {
+    font-weight: 800;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     cursor: pointer;
-    transition: var(--transition);
 }
 
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,112,243,0.3); }
+.logo span {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-links button {
+    background: none;
+    border: none;
+    color: var(--text);
+    margin: 0 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: opacity 0.2s;
+}
+
+.nav-links button:hover { opacity: 0.7; }
+
+.cta-nav {
+    background: var(--brand-blue) !important;
+    color: white !important;
+    padding: 8px 20px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 14px 0 rgba(0,118,255,0.39);
+}
+
+/* 4. Layout & Typography */
+.view {
+    min-height: calc(100vh - 150px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.hero h1 {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    letter-spacing: -0.05em;
+    line-height: 1;
+    margin-bottom: 24px;
+    font-weight: 800;
+}
+
+.gradient {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin-bottom: 40px;
+}
+
+/* 5. Components: Cards & Grid */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    width: 100%;
+    max-width: 1100px;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+    border-radius: 12px;
+    text-align: left;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: var(--brand-blue);
+}
+
+/* 6. Contact Form & Success UI */
+.form-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 48px;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: var(--shadow);
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+input, select, textarea {
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--brand-blue);
+}
+
+#submit-btn {
+    background: var(--brand-blue);
+    color: white;
+    padding: 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px 0 rgba(0,118,255,0.39);
+    transition: all 0.2s;
+}
+
+#submit-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+#submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Success Card */
+#success-ui {
+    padding: 40px 0;
+}
+
+#success-ui i {
+    color: #00dfd8;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 24px;
+}
+
+/* 7. Footer */
+footer {
+    padding: 40px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}

@@ -8,112 +8,65 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-
     <header class="navbar">
         <div class="logo" onclick="router.navigate('home')">
             <i data-lucide="shield-check"></i> <span>GitConnect</span>
         </div>
         <nav class="nav-links">
-            <a href="javascript:void(0)" onclick="router.navigate('home')">Home</a>
-            <a href="javascript:void(0)" onclick="router.navigate('features')">Features</a>
-            <a href="javascript:void(0)" onclick="router.navigate('contact')" class="cta-nav">Get Started</a>
+            <button onclick="router.navigate('home')">Home</button>
+            <button onclick="router.navigate('features')">Features</button>
+            <button onclick="router.navigate('contact')" class="cta-nav">Contact</button>
         </nav>
         <div class="header-actions">
-            <a href="https://github.com/your-repo-link" target="_blank" class="github-link" title="View Source">
-                <i data-lucide="github"></i>
-            </a>
-            <div class="theme-switcher">
-                <button onclick="themeManager.set('light')" id="btn-light"><i data-lucide="sun"></i></button>
-                <button onclick="themeManager.set('dark')" id="btn-dark"><i data-lucide="moon"></i></button>
-                <button onclick="themeManager.set('system')" id="btn-system"><i data-lucide="monitor"></i></button>
-            </div>
+            <a href="https://github.com/your-repo" target="_blank" class="github-icon"><i data-lucide="github"></i></a>
+            <button onclick="themeManager.toggle()" id="theme-btn"><i data-lucide="moon"></i></button>
         </div>
     </header>
 
-    <main id="app-content">
+    <main id="main-content">
         <section id="view-home" class="view">
             <div class="hero">
-                <span class="badge">Version 2.0 Now Live</span>
-                <h1>The Backend-less <span class="gradient-text">Contact Solution</span></h1>
-                <p>Leverage GitHub Discussions as a high-performance, secure, and free database for your static websites.</p>
-                <div class="hero-btns">
-                    <button class="btn-primary" onclick="router.navigate('contact')">Try the Demo</button>
-                    <button class="btn-secondary" onclick="router.navigate('features')">View Tech Stack</button>
-                </div>
+                <h1>The Future of <span class="gradient">Static Forms.</span></h1>
+                <p>A secure bridge between your frontend and GitHub Discussions.</p>
+                <button class="btn-primary" onclick="router.navigate('contact')">Get Started</button>
             </div>
         </section>
 
         <section id="view-features" class="view hidden">
-            <div class="section-header">
-                <h2>Why GitConnect?</h2>
-                <p>Enterprise-grade security meets open-source simplicity.</p>
-            </div>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <i data-lucide="lock"></i>
-                    <h3>Blind Submissions</h3>
-                    <p>End-users can submit data but can never read existing entries, ensuring total privacy.</p>
-                </div>
-                <div class="feature-card">
-                    <i data-lucide="zap"></i>
-                    <h3>Zero Latency</h3>
-                    <p>Powered by GitHub's global edge infrastructure and GraphQL for lightning-fast responses.</p>
-                </div>
-                <div class="feature-card">
-                    <i data-lucide="database"></i>
-                    <h3>No Database Required</h3>
-                    <p>Stop paying for managed DBs. Use GitHub Discussions as your chronological data store.</p>
-                </div>
+            <div class="grid">
+                <div class="card"><h3>Secure</h3><p>GitHub App Auth keeps your keys safe.</p></div>
+                <div class="card"><h3>Private</h3><p>Submissions are write-only for users.</p></div>
+                <div class="card"><h3>Free</h3><p>Zero database costs, forever.</p></div>
             </div>
         </section>
 
         <section id="view-contact" class="view hidden">
-            <div class="contact-container">
-                <div class="contact-info">
+            <div class="form-container">
+                <div id="contact-ui">
                     <h2>Send a Message</h2>
-                    <p>This form uses the <strong>GitHub App Installation</strong> method to post directly to our repository.</p>
-                </div>
-                <form id="contact-form" class="glass-form">
-                    <div class="form-row">
-                        <div class="input-group">
-                            <label>Name</label>
-                            <input type="text" id="user_name" required placeholder="John Doe">
-                        </div>
-                        <div class="input-group">
-                            <label>Email</label>
-                            <input type="email" id="user_email" required placeholder="john@example.com">
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label>Inquiry Type</label>
+                    <form id="contact-form">
+                        <input type="text" id="user_name" placeholder="Name" required>
+                        <input type="email" id="user_email" placeholder="Email" required>
                         <select id="inquiry_type" required>
-                            <option value="general">General Inquiry</option>
+                            <option value="general">General</option>
                             <option value="feature">Feature Request</option>
                             <option value="bug">Bug Report</option>
-                            <option value="feedback">Feedback</option>
                         </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Message</label>
-                        <textarea id="user_message" required placeholder="How can we help you?"></textarea>
-                    </div>
-                    <button type="submit" id="submit-btn">Send Message <i data-lucide="send"></i></button>
-                </form>
-                <div id="success-view" class="hidden success-card">
-                    <i data-lucide="check-circle" class="success-icon"></i>
-                    <h2>Transmission Successful</h2>
-                    <p>Your message has been logged in our GitHub backend. We'll be in touch shortly.</p>
-                    <button class="btn-secondary" onclick="router.navigate('home')">Return Home</button>
+                        <textarea id="user_message" placeholder="Message" required></textarea>
+                        <button type="submit" id="submit-btn">Submit</button>
+                    </form>
+                </div>
+                <div id="success-ui" class="hidden">
+                    <i data-lucide="check-circle"></i>
+                    <h2>Success!</h2>
+                    <p>Your message has been posted to GitHub.</p>
+                    <button class="btn-secondary" onclick="router.navigate('home')">Go Home</button>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer class="main-footer">
-        <p>&copy; 2026 Automation Expert. All rights reserved.</p>
-    </footer>
-
+    <footer>© 2026 Automation Expert. All rights reserved.</footer>
     <script src="app.js"></script>
-    <script>lucide.createIcons();</script>
 </body>
 </html>
