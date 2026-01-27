@@ -13,60 +13,92 @@
             <i data-lucide="shield-check"></i> <span>GitConnect</span>
         </div>
         <nav class="nav-links">
-            <button onclick="router.navigate('home')">Home</button>
-            <button onclick="router.navigate('features')">Features</button>
-            <button onclick="router.navigate('contact')" class="cta-nav">Contact</button>
+            <button id="nav-home" onclick="router.navigate('home')">Home</button>
+            <button id="nav-features" onclick="router.navigate('features')">Features</button>
+            <button id="nav-contact" onclick="router.navigate('contact')" class="cta-nav">Contact</button>
         </nav>
         <div class="header-actions">
-            <a href="https://github.com/your-repo" target="_blank" class="github-icon"><i data-lucide="github"></i></a>
-            <button onclick="themeManager.toggle()" id="theme-btn"><i data-lucide="moon"></i></button>
+            <a href="https://github.com/your-repo" target="_blank" class="github-icon" title="View on GitHub">
+                <i data-lucide="github"></i>
+            </a>
+            <button onclick="themeManager.toggle()" id="theme-btn" title="Toggle Theme">
+                <i data-lucide="monitor"></i>
+            </button>
         </div>
     </header>
 
     <main id="main-content">
         <section id="view-home" class="view">
             <div class="hero">
+                <span class="badge">Enterprise Ready</span>
                 <h1>The Future of <span class="gradient">Static Forms.</span></h1>
-                <p>A secure bridge between your frontend and GitHub Discussions.</p>
-                <button class="btn-primary" onclick="router.navigate('contact')">Get Started</button>
+                <p>A secure, serverless bridge between your frontend and GitHub Discussions. No database, no overhead, total privacy.</p>
+                <button class="btn-shine" onclick="router.navigate('contact')">
+                    Get Started <i data-lucide="arrow-right"></i>
+                </button>
             </div>
         </section>
 
         <section id="view-features" class="view hidden">
+            <div class="section-header">
+                <h2 class="gradient">Engineered for Privacy</h2>
+                <p>Built on the GitHub App framework for zero-leak submissions.</p>
+            </div>
             <div class="grid">
-                <div class="card"><h3>Secure</h3><p>GitHub App Auth keeps your keys safe.</p></div>
-                <div class="card"><h3>Private</h3><p>Submissions are write-only for users.</p></div>
-                <div class="card"><h3>Free</h3><p>Zero database costs, forever.</p></div>
+                <div class="card">
+                    <i data-lucide="shield-alert"></i>
+                    <h3>Blind Submission</h3>
+                    <p>End-users can post data but cannot query or read other entries, ensuring total data isolation for every user.</p>
+                </div>
+                <div class="card">
+                    <i data-lucide="server-off"></i>
+                    <h3>Serverless Zero-Trust</h3>
+                    <p>No permanent database required. Your data lives in your repository, protected by GitHub's enterprise-grade security.</p>
+                </div>
+                <div class="card">
+                    <i data-lucide="code-2"></i>
+                    <h3>Developer First</h3>
+                    <p>Trigger automated workflows, CI/CD pipelines, or custom webhooks the moment a new inquiry is logged in your repo.</p>
+                </div>
             </div>
         </section>
 
         <section id="view-contact" class="view hidden">
             <div class="form-container">
                 <div id="contact-ui">
-                    <h2>Send a Message</h2>
+                    <h2 style="margin-bottom: 10px;">Send a Message</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 30px;">Choose a category to route your message to the right internal thread.</p>
                     <form id="contact-form">
-                        <input type="text" id="user_name" placeholder="Name" required>
-                        <input type="email" id="user_email" placeholder="Email" required>
+                        <div class="input-row">
+                            <input type="text" id="user_name" placeholder="Full Name" required>
+                            <input type="email" id="user_email" placeholder="Email Address" required>
+                        </div>
                         <select id="inquiry_type" required>
-                            <option value="general">General</option>
+                            <option value="" disabled selected>Select Inquiry Type</option>
+                            <option value="general">General Inquiry</option>
                             <option value="feature">Feature Request</option>
                             <option value="bug">Bug Report</option>
+                            <option value="feedback">Feedback</option>
                         </select>
-                        <textarea id="user_message" placeholder="Message" required></textarea>
-                        <button type="submit" id="submit-btn">Submit</button>
+                        <textarea id="user_message" placeholder="How can we help you?" required></textarea>
+                        <button type="submit" id="submit-btn">Send Message</button>
                     </form>
                 </div>
                 <div id="success-ui" class="hidden">
                     <i data-lucide="check-circle"></i>
-                    <h2>Success!</h2>
-                    <p>Your message has been posted to GitHub.</p>
-                    <button class="btn-secondary" onclick="router.navigate('home')">Go Home</button>
+                    <h2>Transmission Successful</h2>
+                    <p>Your message has been securely logged in our GitHub backend. Our team has been notified.</p>
+                    <button class="btn-secondary" onclick="router.navigate('home')">Return Home</button>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer>© 2026 Automation Expert. All rights reserved.</footer>
+    <footer>
+        <p>&copy; 2026 Automation Expert. All rights reserved.</p>
+        <p style="font-size: 0.8rem; margin-top: 10px;">Powered by <a href="https://flexboxpro.netlify.app" style="color: var(--brand-blue); text-decoration: none;">FlexboxPro Architecture</a></p>
+    </footer>
+
     <script src="app.js"></script>
 </body>
 </html>

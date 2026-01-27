@@ -1,36 +1,40 @@
 /**
- * Project: GitConnect Enterprise UI
+ * Project: GitConnect Enterprise Design System
+ * Version: 2.5.0
  * © 2026 Automation Expert. All rights reserved.
  */
 
-/* 1. Design Tokens */
+/* 1. Design Tokens & Root Variables */
 :root {
     --brand-blue: #0070f3;
     --brand-cyan: #00dfd8;
     --brand-gradient: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-cyan) 100%);
     
-    /* Light Mode */
+    /* Light Mode Palette */
     --bg: #ffffff;
     --text: #171717;
     --text-muted: #666666;
     --surface: #fafafa;
     --border: #eaeaea;
-    --nav-bg: rgba(255, 255, 255, 0.8);
+    --nav-bg: rgba(255, 255, 255, 0.85);
     --shadow: 0 4px 14px 0 rgba(0,0,0,0.1);
+    --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    --input-focus: rgba(0, 112, 243, 0.1);
 }
 
 [data-theme="dark"] {
-    /* Dark Mode */
+    /* Dark Mode Palette */
     --bg: #000000;
-    --text: #ffffff;
+    --text: #ededed;
     --text-muted: #888888;
     --surface: #111111;
-    --border: #333333;
-    --nav-bg: rgba(0, 0, 0, 0.8);
+    --border: #222222;
+    --nav-bg: rgba(0, 0, 0, 0.85);
     --shadow: 0 4px 14px 0 rgba(0,0,0,0.5);
+    --card-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-/* 2. Base Reset */
+/* 2. Global Resets & Smoothing */
 * {
     margin: 0;
     padding: 0;
@@ -44,27 +48,29 @@ body {
     line-height: 1.6;
     transition: background 0.3s ease, color 0.3s ease;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
 .hidden { display: none !important; }
 
-/* 3. Navigation */
+/* 3. Modern Navigation (Glassmorphism) */
 .navbar {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 100;
+    width: 100%;
+    z-index: 1000;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 5%;
+    padding: 1rem 8%;
     background: var(--nav-bg);
-    backdrop-filter: saturate(180%) blur(10px);
+    backdrop-filter: saturate(180%) blur(12px);
     border-bottom: 1px solid var(--border);
 }
 
 .logo {
     font-weight: 800;
-    font-size: 1.25rem;
+    font-size: 1.4rem;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -77,45 +83,109 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
+/* Navigation Link Styling & Active State */
+.nav-links {
+    display: flex;
+    align-items: center;
+}
+
 .nav-links button {
     background: none;
     border: none;
     color: var(--text);
-    margin: 0 12px;
-    font-weight: 500;
+    margin: 0 15px;
+    font-weight: 600;
     cursor: pointer;
     font-size: 0.95rem;
-    transition: opacity 0.2s;
+    position: relative;
+    opacity: 0.6;
+    transition: all 0.3s ease;
 }
 
-.nav-links button:hover { opacity: 0.7; }
+.nav-links button:hover {
+    opacity: 0.9;
+}
+
+.nav-links button.active-page {
+    opacity: 1;
+    color: var(--brand-blue);
+}
+
+.nav-links button.active-page::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--brand-blue);
+    border-radius: 2px;
+}
 
 .cta-nav {
     background: var(--brand-blue) !important;
     color: white !important;
-    padding: 8px 20px !important;
-    border-radius: 8px !important;
+    padding: 10px 22px !important;
+    border-radius: 99px !important;
+    opacity: 1 !important;
+    margin-left: 10px !important;
     box-shadow: 0 4px 14px 0 rgba(0,118,255,0.39);
 }
 
-/* 4. Layout & Typography */
+.cta-nav::after { display: none !important; }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.github-icon, #theme-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    transition: transform 0.2s;
+}
+
+.github-icon:hover, #theme-btn:hover { transform: scale(1.1); }
+
+/* 4. Layout & Typography Engine */
 .view {
-    min-height: calc(100vh - 150px);
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 80px 20px;
-    animation: fadeIn 0.4s ease-out;
+    padding: 120px 20px 80px;
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
+.hero { text-align: center; max-width: 900px; }
+
+.badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
 .hero h1 {
-    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-size: clamp(2.8rem, 9vw, 5.5rem);
     letter-spacing: -0.05em;
     line-height: 1;
     margin-bottom: 24px;
@@ -131,82 +201,148 @@ body {
 .hero p {
     font-size: 1.25rem;
     color: var(--text-muted);
-    max-width: 600px;
-    margin-bottom: 40px;
+    max-width: 620px;
+    margin: 0 auto 40px;
 }
 
-/* 5. Components: Cards & Grid */
+/* 5. The Premium "Shine" Button */
+.btn-shine {
+    position: relative;
+    overflow: hidden;
+    background: var(--brand-blue);
+    color: white;
+    padding: 18px 36px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 10px 20px rgba(0, 112, 243, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-shine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: all 0.6s;
+}
+
+.btn-shine:hover::before {
+    left: 100%;
+}
+
+.btn-shine:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(0, 112, 243, 0.3);
+}
+
+/* 6. Components: Features Grid */
+.section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.section-header h2 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+}
+
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
     width: 100%;
     max-width: 1100px;
+    margin-top: 40px;
 }
 
 .card {
     background: var(--surface);
     border: 1px solid var(--border);
     padding: 40px;
-    border-radius: 12px;
+    border-radius: 24px;
     text-align: left;
-    transition: transform 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
     border-color: var(--brand-blue);
+    box-shadow: var(--card-shadow);
 }
 
-/* 6. Contact Form & Success UI */
+.card i {
+    color: var(--brand-blue);
+    margin-bottom: 20px;
+    width: 32px;
+    height: 32px;
+}
+
+.card h3 { margin-bottom: 12px; font-size: 1.5rem; font-weight: 700; }
+.card p { color: var(--text-muted); font-size: 1rem; }
+
+/* 7. Contact Form & Success System */
 .form-container {
     background: var(--surface);
     border: 1px solid var(--border);
     padding: 48px;
-    border-radius: 20px;
+    border-radius: 32px;
     width: 100%;
-    max-width: 550px;
+    max-width: 600px;
     box-shadow: var(--shadow);
 }
 
 form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    text-align: left;
+    gap: 18px;
 }
 
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
 }
 
 input, select, textarea {
-    padding: 14px;
-    border-radius: 8px;
+    padding: 16px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     background: var(--bg);
     color: var(--text);
     font-size: 1rem;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
 }
 
 input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--brand-blue);
+    box-shadow: 0 0 0 4px var(--input-focus);
 }
+
+textarea { min-height: 120px; resize: vertical; }
 
 #submit-btn {
     background: var(--brand-blue);
     color: white;
-    padding: 16px;
+    padding: 18px;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 700;
+    font-size: 1.1rem;
     cursor: pointer;
     box-shadow: 0 4px 14px 0 rgba(0,118,255,0.39);
     transition: all 0.2s;
+    margin-top: 10px;
 }
 
 #submit-btn:hover {
@@ -214,28 +350,48 @@ input:focus, select:focus, textarea:focus {
     transform: translateY(-1px);
 }
 
-#submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* Success Card */
+/* Success Card Styling */
 #success-ui {
-    padding: 40px 0;
+    text-align: center;
+    padding: 20px 0;
 }
 
 #success-ui i {
-    color: #00dfd8;
+    color: var(--brand-cyan);
     width: 80px;
     height: 80px;
     margin-bottom: 24px;
 }
 
-/* 7. Footer */
+.btn-secondary {
+    background: var(--border);
+    color: var(--text);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: opacity 0.2s;
+}
+
+.btn-secondary:hover { opacity: 0.8; }
+
+/* 8. Footer */
 footer {
-    padding: 40px;
+    padding: 60px 20px;
     text-align: center;
     border-top: 1px solid var(--border);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-muted);
+}
+
+/* 9. Mobile Responsiveness */
+@media (max-width: 768px) {
+    .navbar { padding: 1rem 5%; }
+    .nav-links button:not(.cta-nav) { display: none; }
+    .input-row { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 3rem; }
+    .form-container { padding: 30px; }
+    .section-header h2 { font-size: 2.2rem; }
 }
