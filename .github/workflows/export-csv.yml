@@ -1,6 +1,8 @@
 name: "Sync Submissions to CSV"
 
 on:
+    workflow_dispatch:
+
     discussion_comment:
         types: [created]
 
@@ -18,36 +20,52 @@ jobs:
               id: extract
               shell: bash
               run: |
-                  # The body of the comment contains the form data
+                  # Capture raw body (maintaining newlines)
                   BODY="${{ github.event.comment.body }}"
                   CREATED_AT="${{ github.event.comment.created_at }}"
 
-                  # Use grep/sed to extract fields if your Netlify function formats them like "Email: test@example.com"
-                  # Otherwise, this grabs the first email-like string found in the body
-                  EMAIL=$(echo "$BODY" | grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z|]{2,}\b" | head -n 1)
+                  # 1. Extract Name: Look for text between Name: and Email:
+                  NAME=$(echo "$BODY" | sed -n 's/.*Name:\(.*\)**Email:.*/\1/p' | tr -d '*' | xargs)
 
-                  # Clean the body for CSV (remove newlines and commas)
-                  CLEAN_BODY=$(echo "$BODY" | tr '\n' ' ' | tr ',' ';')
+                  # 2. Extract Email: Grabs content inside the parentheses
+                  EMAIL=$(echo "$BODY" | sed -n 's/.*(\(.*\)).*/\1/p' | xargs)
+
+                  # 3. Extract Message: Look for the line AFTER **Message:**
+                  # We grab the line immediately following the pattern and clean it
+                  # MSG=$(echo "$BODY" | grep -A 1 "Message:" | tail -n 1 | sed 's/\*\*//g' | xargs)
+                  MSG=$(echo "$BODY" | sed -n '/\*\*Message:\*\*/,$p' | tail -n +2 | sed 's/\*\*//g')
+
+
+                  # 4. Fallback: If Message is still empty, set a default
+                  if [ -z "$MSG" ]; then MSG="No message content"; fi
+
+                  # 5. Sanitization: Replace commas with semicolons for CSV safety
+                  SAFE_NAME=$(echo "$NAME" | tr ',' ';')
+                  SAFE_MSG=$(echo "$MSG" | tr ',' ';')
 
                   echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
                   echo "email=$EMAIL" >> $GITHUB_OUTPUT
-                  echo "content=$CLEAN_BODY" >> $GITHUB_OUTPUT
+                  echo "name=$SAFE_NAME" >> $GITHUB_OUTPUT
+                  echo "msg=$SAFE_MSG" >> $GITHUB_OUTPUT
 
             - name: Update CSV File
               run: |
-                  FILE="data/submissions.csv"
+                  FILE="data/contact-form-submissions.csv"
                   mkdir -p data
 
+                  # Create header if file is new
                   if [ ! -f "$FILE" ]; then
-                    echo "Date,Email,Content" > "$FILE"
+                    echo "Date,Email,Name,Message" > "$FILE"
                   fi
 
-                  echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.content }}" >> "$FILE"
+                  # Append formatted row
+                  echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.name }},${{ steps.extract.outputs.msg }}" >> "$FILE"
 
             - name: Commit and Push Changes
               run: |
+                  FILE="data/contact-form-submissions.csv"
                   git config --global user.name "GitConnect Bot"
                   git config --global user.email "bot@automationexpert.us.kg"
-                  git add data/submissions.csv
+                  git add $FILE
                   # Prevent error if nothing changed
                   git diff --quiet && git diff --staged --quiet || (git commit -m "auto: log entry from ${{ steps.extract.outputs.email }}" && git push)
