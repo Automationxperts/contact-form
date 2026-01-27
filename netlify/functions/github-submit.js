@@ -1,14 +1,13 @@
 /**
  * Project: GitHub App Contact Backend
- * Backend: Netlify/Node.js Serverless
+ * Backend: Netlify/Node.js Serverless (ESM Version)
  * © 2026 Automation Expert. All rights reserved.
  */
 
-const { createAppAuth } = require("@octokit/auth-app");
-const { Octokit } = require("@octokit/rest");
-const fetch = require("node-fetch"); // Use the installed dependency
+import { createAppAuth } from "@octokit/auth-app";
+import fetch from "node-fetch";
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -52,7 +51,11 @@ exports.handler = async (event) => {
     const result = await graphqlResponse.json();
 
     if (result.errors) {
-        throw new Error(result.errors[0].message);
+      console.error("GitHub API Error:", result.errors);
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: result.errors[0].message }),
+      };
     }
 
     return {
@@ -61,6 +64,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ message: "Success" }),
     };
   } catch (error) {
+    console.error("Function Error:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
