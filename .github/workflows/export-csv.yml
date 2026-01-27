@@ -16,6 +16,36 @@ jobs:
             - name: Checkout Repository
               uses: actions/checkout@v4
 
+            # - name: Extract Comment Data
+            #   id: extract
+            #   shell: bash
+            #   run: |
+            #       # The body of the comment contains the form data
+            #       BODY="${{ github.event.comment.body }}"
+            #       CREATED_AT="${{ github.event.comment.created_at }}"
+
+            #       # Use grep/sed to extract fields if your Netlify function formats them like "Email: test@example.com"
+            #       # Otherwise, this grabs the first email-like string found in the body
+            #       EMAIL=$(echo "$BODY" | grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z|]{2,}\b" | head -n 1)
+
+            #       # Clean the body for CSV (remove newlines and commas)
+            #       CLEAN_BODY=$(echo "$BODY" | tr '\n' ' ' | tr ',' ';')
+
+            #       echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
+            #       echo "email=$EMAIL" >> $GITHUB_OUTPUT
+            #       echo "content=$CLEAN_BODY" >> $GITHUB_OUTPUT
+
+            # - name: Update CSV File
+            #   run: |
+            #       FILE="data/submissions.csv"
+            #       mkdir -p data
+
+            #       if [ ! -f "$FILE" ]; then
+            #         echo "Date,Email,Content" > "$FILE"
+            #       fi
+
+            #       echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.content }}" >> "$FILE"
+
             - name: Extract Comment Data
               id: extract
               shell: bash
@@ -25,24 +55,29 @@ jobs:
                   CREATED_AT="${{ github.event.comment.created_at }}"
 
                   # 1. Extract Name: Look for text between Name: and Email:
-                  NAME=$(echo "$BODY" | sed -n 's/.*Name:\(.*\)**Email:.*/\1/p' | tr -d '*' | xargs)
+                  NAME=$(echo "$BODY" \
+                    | sed -n 's/.*\*\*Name:\*\*[[:space:]]*\([^*]*\).*/\1/p' \
+                    | xargs)
 
                   # 2. Extract Email: Grabs content inside the parentheses
-                  EMAIL=$(echo "$BODY" | sed -n 's/.*(\(.*\)).*/\1/p' | xargs)
+                  EMAIL=$(echo "$BODY" \
+                    | sed -n 's/.*(\([^)]*\)).*/\1/p' \
+                    | xargs)
 
-                  # 3. Extract Message: Look for the line AFTER **Message:**
-                  # We grab the line immediately following the pattern and clean it
-                  # MSG=$(echo "$BODY" | grep -A 1 "Message:" | tail -n 1 | sed 's/\*\*//g' | xargs)
-                  MSG=$(echo "$BODY" | sed -n '/\*\*Message:\*\*/,$p' | tail -n +2 | sed 's/\*\*//g')
-
+                  # 3. # 3. Extract Message: Look for the line AFTER **Message:** (multi-line safe)
+                  MSG=$(echo "$BODY" \
+                    | sed -n '/\*\*Message:\*\*/,$p' \
+                    | tail -n +2 \
+                    | sed 's/\*\*//g')
 
                   # 4. Fallback: If Message is still empty, set a default
-                  if [ -z "$MSG" ]; then MSG="No message content"; fi
+                  [ -z "$MSG" ] && MSG="No message content"
 
-                  # 5. Sanitization: Replace commas with semicolons for CSV safety
+                  # 5. CSV sanitization: Replace commas with semicolons for CSV safety
                   SAFE_NAME=$(echo "$NAME" | tr ',' ';')
                   SAFE_MSG=$(echo "$MSG" | tr ',' ';')
 
+                  # Output
                   echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
                   echo "email=$EMAIL" >> $GITHUB_OUTPUT
                   echo "name=$SAFE_NAME" >> $GITHUB_OUTPUT
