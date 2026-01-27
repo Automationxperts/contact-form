@@ -1,0 +1,53 @@
+name: "Sync Submissions to CSV"
+
+on:
+    discussion_comment:
+        types: [created]
+
+jobs:
+    append_to_csv:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+
+            - name: Extract Comment Data
+              id: extract
+              shell: bash
+              run: |
+                  # The body of the comment contains the form data
+                  BODY="${{ github.event.comment.body }}"
+                  CREATED_AT="${{ github.event.comment.created_at }}"
+
+                  # Use grep/sed to extract fields if your Netlify function formats them like "Email: test@example.com"
+                  # Otherwise, this grabs the first email-like string found in the body
+                  EMAIL=$(echo "$BODY" | grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z|]{2,}\b" | head -n 1)
+
+                  # Clean the body for CSV (remove newlines and commas)
+                  CLEAN_BODY=$(echo "$BODY" | tr '\n' ' ' | tr ',' ';')
+
+                  echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
+                  echo "email=$EMAIL" >> $GITHUB_OUTPUT
+                  echo "content=$CLEAN_BODY" >> $GITHUB_OUTPUT
+
+            - name: Update CSV File
+              run: |
+                  FILE="data/submissions.csv"
+                  mkdir -p data
+
+                  if [ ! -f "$FILE" ]; then
+                    echo "Date,Email,Content" > "$FILE"
+                  fi
+
+                  echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.content }}" >> "$FILE"
+
+            - name: Commit and Push Changes
+              run: |
+                  git config --global user.name "GitConnect Bot"
+                  git config --global user.email "bot@automationexpert.us.kg"
+                  git add data/submissions.csv
+                  # Prevent error if nothing changed
+                  git diff --quiet && git diff --staged --quiet || (git commit -m "auto: log entry from ${{ steps.extract.outputs.email }}" && git push)
