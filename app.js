@@ -1,181 +1,65 @@
 /**
- * Project: GitConnect Enterprise Application Engine
- * Functionality: SPA Routing, Triple-State Theme, Secure Submission
+ * Project: GitHub App Contact Backend (Vercel Dedicated)
+ * Path: /api/github-submit.js
  * © 2026 Automation Expert. All rights reserved.
  */
 
-// 1. Enhanced SPA Routing Logic
-const router = {
-    navigate(viewId) {
-        // Hide all views to prevent overlapping layouts
-        const views = document.querySelectorAll('.view');
-        views.forEach(view => view.classList.add('hidden'));
+import { Octokit } from "octokit";
 
-        // Display the requested view
-        const target = document.getElementById(`view-${viewId}`);
-        if (target) {
-            target.classList.remove('hidden');
+const DISCUSSION_MAP = {
+    general: "D_kwDONkYa8s4Aj1Sn",
+    feature: "D_kwDONkYa8s4Aj1Sk",
+    bug: "D_kwDONkYa8s4Aj1St",
+    feedback: "D_kwDONkYa8s4Aj1RP"
+};
+
+export default async function handler(req, res) {
+    // 1. Guard: Only allow POST
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    try {
+        // 2. Extract Data from req.body (Vercel parses JSON automatically)
+        const { type, body, name, email } = req.body;
+        const targetId = DISCUSSION_MAP[type];
+
+        if (!targetId) {
+            return res.status(400).json({ error: "Invalid inquiry type." });
         }
 
-        // Update Navigation Highlighting
-        this.updateNavLinks(viewId);
-
-        // Reset the Contact UI state if navigating to contact page
-        if (viewId === 'contact') {
-            const contactUI = document.getElementById('contact-ui');
-            const successUI = document.getElementById('success-ui');
-            const contactForm = document.getElementById('contact-form');
-            
-            if (contactUI) contactUI.classList.remove('hidden');
-            if (successUI) successUI.classList.add('hidden');
-            if (contactForm) contactForm.reset();
-        }
-
-        // Re-trigger Lucide icons for any dynamic elements
-        if (window.lucide) {
-            window.lucide.createIcons();
-        }
-
-        // Smooth scroll to top for better UX
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        // Update URL hash without jumping the page
-        window.history.replaceState(null, null, `#${viewId}`);
-    },
-
-    updateNavLinks(activeId) {
-        document.querySelectorAll('.nav-links button').forEach(btn => {
-            // Remove active class from all buttons
-            btn.classList.remove('active-page');
-            
-            // Match the button ID (nav-home, nav-features, nav-contact)
-            if (btn.id === `nav-${activeId}`) {
-                btn.classList.add('active-page');
-            }
+        // 3. Initialize Octokit
+        const octokit = new Octokit({
+            authStrategy: (await import("@octokit/auth-app")).createAppAuth,
+            auth: {
+                appId: process.env.GH_APP_ID,
+                privateKey: process.env.GH_PRIVATE_KEY.replace(/\\n/g, '\n'),
+                installationId: process.env.GH_INSTALLATION_ID,
+            },
         });
-    }
-};
 
-// 2. Triple-State Theme Management (System/Light/Dark)
-const themeManager = {
-    init() {
-        const savedTheme = localStorage.getItem('theme') || 'system';
-        this.apply(savedTheme);
-    },
+        const commentBody = `**Name:** ${name}\n**Email:** ${email}\n**Type:** ${type}\n**Message:**\n${body}`;
 
-    toggle() {
-        const current = localStorage.getItem('theme') || 'system';
-        const sequence = ['system', 'light', 'dark'];
-        const next = sequence[(sequence.indexOf(current) + 1) % 3];
-        this.apply(next);
-    },
-
-    apply(mode) {
-        const root = document.documentElement;
-        let iconName = 'monitor'; 
-
-        if (mode === 'system') {
-            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            root.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            iconName = 'monitor';
-        } else {
-            root.setAttribute('data-theme', mode);
-            iconName = mode === 'dark' ? 'moon' : 'sun';
-        }
-
-        localStorage.setItem('theme', mode);
-        
-        const themeIcon = document.querySelector('#theme-btn i');
-        if (themeIcon && window.lucide) {
-            themeIcon.setAttribute('data-lucide', iconName);
-            window.lucide.createIcons();
-        }
-    }
-};
-
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (localStorage.getItem('theme') === 'system') {
-        themeManager.apply('system');
-    }
-});
-
-// 3. Secure Form Submission with UI Feedback
-const setupForm = () => {
-    const formElement = document.getElementById('contact-form');
-    if (!formElement) return;
-
-    formElement.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const submitBtn = document.getElementById('submit-btn');
-        const originalText = submitBtn.innerText;
-        
-        // LOCK UI: Enter Loading State
-        submitBtn.disabled = true;
-        submitBtn.innerText = 'Transmitting...';
-        submitBtn.style.opacity = '0.7';
-
-        const payload = {
-            name: document.getElementById('user_name').value,
-            email: document.getElementById('user_email').value,
-            type: document.getElementById('inquiry_type').value,
-            body: document.getElementById('user_message').value
-        };
-
-        // Create a 15-second timeout to prevent the button being stuck on "Transmitting" forever
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        try {
-            const response = await fetch('/.netlify/functions/github-submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                signal: controller.signal
-            });
-
-            if (response.ok) {
-                // Success Transition
-                document.getElementById('contact-ui').classList.add('hidden');
-                document.getElementById('success-ui').classList.remove('hidden');
-                if (window.lucide) window.lucide.createIcons();
-            } else {
-                // Server responded with an error (e.g. 400 or 500)
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Server Error: ${response.status}`);
+        // 4. Execute GraphQL Mutation
+        const result = await octokit.graphql(`
+            mutation AddComment($discussionId: ID!, $body: String!) {
+                addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
+                    comment { id url }
+                }
             }
+        `, {
+            discussionId: targetId,
+            body: commentBody
+        });
 
-        } catch (error) {
-            console.error('Submission Error:', error);
-            
-            let message = "Please check your connection.";
-            if (error.name === 'AbortError') {
-                message = "The request timed out. Netlify function might be cold-starting.";
-            } else if (error.message) {
-                message = error.message;
-            }
+        // 5. Success Response
+        return res.status(200).json({ 
+            message: "Success", 
+            url: result.addDiscussionComment.comment.url 
+        });
 
-            alert(`Notice: ${message}`);
-
-            // UNLOCK UI: Re-enable the button on failure
-            submitBtn.disabled = false;
-            submitBtn.innerText = originalText;
-            submitBtn.style.opacity = '1';
-
-        } finally {
-            clearTimeout(timeoutId);
-        }
-    });
-};
-
-// 4. Boot Application
-document.addEventListener('DOMContentLoaded', () => {
-    themeManager.init();
-    setupForm();
-    
-    const hash = window.location.hash.replace('#', '');
-    const validViews = ['home', 'features', 'contact'];
-    const initialView = validViews.includes(hash) ? hash : 'home';
-    
-    router.navigate(initialView);
-});
+    } catch (error) {
+        console.error("Vercel Function Error:", error);
+        return res.status(500).json({ error: error.message });
+    }
+}
