@@ -1,5 +1,5 @@
 /**
- * Project: GitHub App Contact Backend (Vercel Dedicated)
+ * Project: GitHub App Contact Backend (Vercel Stable)
  * Path: /api/github-submit.js
  * © 2026 Automation Expert. All rights reserved.
  */
@@ -14,9 +14,12 @@ const DISCUSSION_MAP = {
 };
 
 export default async function handler(req, res) {
-    // 1. Handle CORS Pre-flight & Method Guard
+    // 1. Handle CORS and Methods
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
     if (req.method === 'OPTIONS') {
-        res.setHeader('Access-Control-Allow-Methods', 'POST');
         return res.status(200).end();
     }
 
@@ -25,16 +28,15 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 2. Extract Data (Vercel parses JSON bodies into req.body automatically)
-        const { type, body, name, email } = req.body;
-        const targetId = DISCUSSION_MAP[type];
+        // 2. Data Extraction
+        // Note: Vercel sometimes doesn't parse the body if the Content-Type header is messy.
+        const data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        const { type, body, name, email } = data;
 
-        if (!targetId) {
-            return res.status(400).json({ error: "Invalid inquiry type selected." });
-        }
+        const targetId = DISCUSSION_MAP[type];
+        if (!targetId) throw new Error("Invalid inquiry type.");
 
         // 3. Initialize Octokit
-        // Note: Using dynamic import for auth-app to prevent bundling issues
         const { createAppAuth } = await import("@octokit/auth-app");
         
         const octokit = new Octokit({
@@ -60,13 +62,10 @@ export default async function handler(req, res) {
             body: commentBody
         });
 
-        return res.status(200).json({ 
-            success: true, 
-            url: result.addDiscussionComment.comment.url 
-        });
+        return res.status(200).json({ success: true, url: result.addDiscussionComment.comment.url });
 
     } catch (error) {
-        console.error("Vercel Function Failure:", error);
-        return res.status(500).json({ error: error.message || "Internal Server Error" });
+        console.error("Vercel Internal Error:", error);
+        return res.status(500).json({ error: error.message });
     }
 }
