@@ -22,9 +22,13 @@ const router = {
 
         // Reset the Contact UI state if navigating to contact page
         if (viewId === 'contact') {
-            document.getElementById('contact-ui').classList.remove('hidden');
-            document.getElementById('success-ui').classList.add('hidden');
-            document.getElementById('contact-form').reset();
+            const contactUI = document.getElementById('contact-ui');
+            const successUI = document.getElementById('success-ui');
+            const contactForm = document.getElementById('contact-form');
+            
+            if (contactUI) contactUI.classList.remove('hidden');
+            if (successUI) successUI.classList.add('hidden');
+            if (contactForm) contactForm.reset();
         }
 
         // Re-trigger Lucide icons for any dynamic elements
@@ -34,13 +38,17 @@ const router = {
 
         // Smooth scroll to top for better UX
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Update URL hash without jumping the page
+        window.history.replaceState(null, null, `#${viewId}`);
     },
 
     updateNavLinks(activeId) {
         document.querySelectorAll('.nav-links button').forEach(btn => {
+            // Remove active class from all buttons
             btn.classList.remove('active-page');
             
-            // Checks if the button's ID matches the pattern 'nav-[viewId]'
+            // Match the button ID (nav-home, nav-features, nav-contact)
             if (btn.id === `nav-${activeId}`) {
                 btn.classList.add('active-page');
             }
@@ -51,6 +59,7 @@ const router = {
 // 2. Triple-State Theme Management (System/Light/Dark)
 const themeManager = {
     init() {
+        // Default to 'system' if no preference is saved
         const savedTheme = localStorage.getItem('theme') || 'system';
         this.apply(savedTheme);
     },
@@ -64,7 +73,7 @@ const themeManager = {
 
     apply(mode) {
         const root = document.documentElement;
-        let iconName = 'monitor'; // Default for 'system'
+        let iconName = 'monitor'; 
 
         if (mode === 'system') {
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -94,8 +103,10 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 });
 
 // 3. Secure Form Submission with UI Feedback
-const formElement = document.getElementById('contact-form');
-if (formElement) {
+const setupForm = () => {
+    const formElement = document.getElementById('contact-form');
+    if (!formElement) return;
+
     formElement.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -121,31 +132,33 @@ if (formElement) {
             });
 
             if (response.ok) {
-                // SUCCESS: Transition the UI containers
                 document.getElementById('contact-ui').classList.add('hidden');
                 document.getElementById('success-ui').classList.remove('hidden');
                 if (window.lucide) window.lucide.createIcons();
             } else {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.error || 'Submission rejected by server');
             }
 
         } catch (error) {
             console.error('Submission Error:', error);
-            alert(`Oops! ${error.message}. Please check your connection or Netlify logs.`);
+            alert(`Oops! ${error.message}. Please check your connection.`);
             
-            // Reset button to allow retry
             submitBtn.disabled = false;
             submitBtn.innerText = originalText;
         }
     });
-}
+};
 
 // 4. Boot Application
 document.addEventListener('DOMContentLoaded', () => {
     themeManager.init();
+    setupForm();
     
     // Check URL hash for direct deep-linking, otherwise default to 'home'
-    const initialView = window.location.hash.replace('#', '') || 'home';
+    const hash = window.location.hash.replace('#', '');
+    const validViews = ['home', 'features', 'contact'];
+    const initialView = validViews.includes(hash) ? hash : 'home';
+    
     router.navigate(initialView);
 });

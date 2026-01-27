@@ -18,7 +18,7 @@
             <button id="nav-contact" onclick="router.navigate('contact')" class="cta-nav">Contact</button>
         </nav>
         <div class="header-actions">
-            <a href="https://github.com/your-repo" target="_blank" class="github-icon" title="View on GitHub">
+            <a href="https://github.com/Automationxperts/contact-form" target="_blank" class="github-icon" title="View on GitHub">
                 <i data-lucide="github"></i>
             </a>
             <button onclick="themeManager.toggle()" id="theme-btn" title="Toggle Theme">
@@ -33,7 +33,7 @@
                 <span class="badge">Enterprise Ready</span>
                 <h1>The Future of <span class="gradient">Static Forms.</span></h1>
                 <p>A secure, serverless bridge between your frontend and GitHub Discussions. No database, no overhead, total privacy.</p>
-                <button class="btn-shine" onclick="router.navigate('contact')">
+                <button class="btn-shine" onclick="router.navigate('features')">
                     Get Started <i data-lucide="arrow-right"></i>
                 </button>
             </div>
@@ -61,6 +61,9 @@
                     <p>Trigger automated workflows, CI/CD pipelines, or custom webhooks the moment a new inquiry is logged in your repo.</p>
                 </div>
             </div>
+            <button class="btn-shine" style="margin-top: 40px;" onclick="router.navigate('contact')">
+                Contact Us to Setup
+            </button>
         </section>
 
         <section id="view-contact" class="view hidden">
@@ -85,7 +88,7 @@
                     </form>
                 </div>
                 <div id="success-ui" class="hidden">
-                    <i data-lucide="check-circle"></i>
+                    <i data-lucide="check-circle" style="color: var(--brand-cyan); width: 80px; height: 80px;"></i>
                     <h2>Transmission Successful</h2>
                     <p>Your message has been securely logged in our GitHub backend. Our team has been notified.</p>
                     <button class="btn-secondary" onclick="router.navigate('home')">Return Home</button>
