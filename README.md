@@ -1,4 +1,4 @@
-# GitHub Contact Form
+# Git Connect
 
 A secure, serverless contact form solution that uses the **GitHub GraphQL API** and **GitHub App Installations** as a backend database. This system allows users to submit inquiries directly into a repository's Discussions section without exposing past submissions to the public.
 
