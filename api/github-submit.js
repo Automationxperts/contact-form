@@ -53,9 +53,10 @@ export default async function handler(req, res) {
 **Name:** ${name}
 **Email:** ${email}
 **Type:** ${type}
-
+**Message:**
 ${body}
 `.trim();
+
 
     /* -------------------- GraphQL mutation -------------------- */
     const response = await fetch("https://api.github.com/graphql", {
