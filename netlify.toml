@@ -1,11 +1,12 @@
 [build]
   publish = "."
-  functions = "netlify/functions"
+  functions = "api"
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["@octokit/auth-app"] # Optional: ensures this specific module is handled correctly
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to = "/.netlify/functions/*"
   status = 200

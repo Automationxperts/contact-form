@@ -100,10 +100,13 @@ const setupForm = () => {
         const originalText = submitBtn.innerText;
         
         // 1. Determine Endpoint based on Hostname
-        const isNetlify = window.location.hostname.includes('netlify.app');
-        const endpoint = isNetlify 
-            ? '/.netlify/functions/github-submit' 
-            : '/api/github-submit';
+        // const isNetlify = window.location.hostname.includes('netlify.app');
+        // const endpoint = isNetlify 
+        //     ? '/.netlify/functions/github-submit' 
+        //     : '/api/github-submit';
+
+        // Unified Endpoint: Works on both Vercel (Native) and Netlify (via Redirect)
+        const endpoint = '/api/github-submit';
 
         // Enter Loading State
         submitBtn.disabled = true;

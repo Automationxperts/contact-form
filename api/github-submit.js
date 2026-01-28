@@ -6,11 +6,12 @@
 
 import { createAppAuth } from "@octokit/auth-app";
 
+// Mapping frontend keys to the new Environment Variable names
 const DISCUSSION_MAP = {
-  general: "D_kwDONkYa8s4Aj1Sn",
-  feature: "D_kwDONkYa8s4Aj1Sk",
-  bug: "D_kwDONkYa8s4Aj1St",
-  feedback: "D_kwDONkYa8s4Aj1RP",
+    general: process.env.ID_GENERAL,
+    feature: process.env.ID_FEATURE,
+    bug: process.env.ID_BUG,
+    feedback: process.env.ID_FEEDBACK
 };
 
 /**
