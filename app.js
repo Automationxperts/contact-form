@@ -7,20 +7,16 @@
 // 1. Enhanced SPA Routing Logic
 const router = {
     navigate(viewId) {
-        // Hide all views to prevent overlapping layouts
         const views = document.querySelectorAll('.view');
         views.forEach(view => view.classList.add('hidden'));
 
-        // Display the requested view
         const target = document.getElementById(`view-${viewId}`);
         if (target) {
             target.classList.remove('hidden');
         }
 
-        // Update Navigation Highlighting
         this.updateNavLinks(viewId);
 
-        // Reset the Contact UI state if navigating to contact page
         if (viewId === 'contact') {
             const contactUI = document.getElementById('contact-ui');
             const successUI = document.getElementById('success-ui');
@@ -31,24 +27,17 @@ const router = {
             if (contactForm) contactForm.reset();
         }
 
-        // Re-trigger Lucide icons for any dynamic elements
         if (window.lucide) {
             window.lucide.createIcons();
         }
 
-        // Smooth scroll to top for better UX
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        // Update URL hash without jumping the page
         window.history.replaceState(null, null, `#${viewId}`);
     },
 
     updateNavLinks(activeId) {
         document.querySelectorAll('.nav-links button').forEach(btn => {
-            // Remove active class from all buttons
             btn.classList.remove('active-page');
-            
-            // Match the button ID (nav-home, nav-features, nav-contact)
             if (btn.id === `nav-${activeId}`) {
                 btn.classList.add('active-page');
             }
@@ -59,7 +48,6 @@ const router = {
 // 2. Triple-State Theme Management (System/Light/Dark)
 const themeManager = {
     init() {
-        // Default to 'system' if no preference is saved
         const savedTheme = localStorage.getItem('theme') || 'system';
         this.apply(savedTheme);
     },
@@ -86,7 +74,6 @@ const themeManager = {
 
         localStorage.setItem('theme', mode);
         
-        // Update the theme toggle icon dynamically
         const themeIcon = document.querySelector('#theme-btn i');
         if (themeIcon && window.lucide) {
             themeIcon.setAttribute('data-lucide', iconName);
@@ -95,7 +82,6 @@ const themeManager = {
     }
 };
 
-// Listen for OS theme changes if the app is in 'system' mode
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (localStorage.getItem('theme') === 'system') {
         themeManager.apply('system');
@@ -113,6 +99,12 @@ const setupForm = () => {
         const submitBtn = document.getElementById('submit-btn');
         const originalText = submitBtn.innerText;
         
+        // 1. Determine Endpoint based on Hostname
+        const isNetlify = window.location.hostname.includes('netlify.app');
+        const endpoint = isNetlify 
+            ? '/.netlify/functions/github-submit' 
+            : '/api/github-submit';
+
         // Enter Loading State
         submitBtn.disabled = true;
         submitBtn.innerText = 'Transmitting...';
@@ -125,7 +117,7 @@ const setupForm = () => {
         };
 
         try {
-            const response = await fetch('/.netlify/functions/github-submit', {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -142,8 +134,9 @@ const setupForm = () => {
 
         } catch (error) {
             console.error('Submission Error:', error);
-            alert(`Oops! ${error.message}. Please check your connection.`);
+            alert(`Notice: ${error.message}`);
             
+            // Re-enable button on error
             submitBtn.disabled = false;
             submitBtn.innerText = originalText;
         }
@@ -155,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
     themeManager.init();
     setupForm();
     
-    // Check URL hash for direct deep-linking, otherwise default to 'home'
     const hash = window.location.hash.replace('#', '');
     const validViews = ['home', 'features', 'contact'];
     const initialView = validViews.includes(hash) ? hash : 'home';
