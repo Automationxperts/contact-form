@@ -1,12 +1,14 @@
 [build]
   publish = "."
-  functions = "api"
+  # Explicitly point to the folder where github-submit.js lives
+  functions = "api" 
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@octokit/auth-app"] # Optional: ensures this specific module is handled correctly
 
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/*"
+  # This maps the frontend call to the internal Netlify function path
+  from = "/api/github-submit"
+  to = "/.netlify/functions/github-submit"
   status = 200
+  force = true
