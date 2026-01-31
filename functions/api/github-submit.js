@@ -1,6 +1,6 @@
 // functions/github-submit.js
 // This is the Cloudflare Pages "Entry Point"
-import { fetch as workerHandler } from "../api/github-submit.js";
+import { fetch as workerHandler } from "../../api/github-submit.js";
 
 export const onRequestPost = async (context) => {
   // Cloudflare Pages Functions provide a 'context' object
