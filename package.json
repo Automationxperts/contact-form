@@ -7,6 +7,7 @@
   "dependencies": {
     "@octokit/auth-app": "^7.1.1",
     "@octokit/rest": "^21.0.0",
+    "netlify-cli": "^23.14.0",
     "node-fetch": "^3.3.2"
   },
   "author": "Automation Expert",
