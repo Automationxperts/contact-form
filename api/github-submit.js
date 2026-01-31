@@ -1,35 +1,35 @@
 /**
  * Project: GitConnect Unified Backend (AutomationExpert Factory)
- * Platforms: Netlify & Vercel
+ * Platforms: Netlify, Vercel, & Cloudflare Workers
  * © 2026 Automation Expert. All rights reserved.
  */
 
 import { createAppAuth } from "@octokit/auth-app";
 
-// Mapping frontend keys to the new Environment Variable names
-const DISCUSSION_MAP = {
-    general: process.env.ID_GENERAL,
-    feature: process.env.ID_FEATURE,
-    bug: process.env.ID_BUG,
-    feedback: process.env.ID_FEEDBACK
-};
-
 /**
  * CORE LOGIC: Agnostic of the hosting platform
+ * Now takes 'env' as an argument to support Cloudflare's architecture.
  */
-async function executeSubmission(payload) {
+async function executeSubmission(payload, env) {
   const { type, body, name, email } = payload;
-  const discussionId = DISCUSSION_MAP[type];
+  
+  // Mapping frontend keys to Environment Variables
+  const discussionId = {
+    general: env.ID_GENERAL,
+    feature: env.ID_FEATURE,
+    bug: env.ID_BUG,
+    feedback: env.ID_FEEDBACK
+  }[type];
 
   if (!name || !email || !body || !discussionId) {
-    throw { status: 400, message: "Invalid input or discussion type." };
+    throw { status: 400, message: "Invalid input or missing configuration." };
   }
 
   // 1. GitHub App Auth
   const auth = createAppAuth({
-    appId: process.env.GH_APP_ID,
-    privateKey: process.env.GH_PRIVATE_KEY.replace(/\\n/g, "\n"),
-    installationId: process.env.GH_INSTALLATION_ID,
+    appId: env.GH_APP_ID,
+    privateKey: env.GH_PRIVATE_KEY.replace(/\\n/g, "\n"),
+    installationId: env.GH_INSTALLATION_ID,
   });
 
   const { token } = await auth({ type: "installation" });
@@ -43,6 +43,7 @@ async function executeSubmission(payload) {
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
+      "User-Agent": "AutomationExpert-Factory-Worker" // Required for Cloudflare/GitHub compatibility
     },
     body: JSON.stringify({
       query: `
@@ -63,14 +64,13 @@ async function executeSubmission(payload) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* PLATFORM HANDLERS                            */
+/* PLATFORM HANDLERS                                                          */
 /* -------------------------------------------------------------------------- */
 
 /**
- * VERCEL: Default Export (Express-like req/res)
+ * 1. VERCEL: Default Export
  */
 export default async function vercelHandler(req, res) {
-  // CORS Headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -79,7 +79,7 @@ export default async function vercelHandler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
   try {
-    const result = await executeSubmission(req.body || {});
+    const result = await executeSubmission(req.body || {}, process.env);
     return res.status(200).json(result);
   } catch (err) {
     console.error("Vercel Error:", err);
@@ -88,14 +88,14 @@ export default async function vercelHandler(req, res) {
 }
 
 /**
- * NETLIFY: Named Export 'handler' (AWS Lambda style)
+ * 2. NETLIFY: Named Export 'handler'
  */
 export const handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
 
   try {
     const payload = JSON.parse(event.body || "{}");
-    const result = await executeSubmission(payload);
+    const result = await executeSubmission(payload, process.env);
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
@@ -107,5 +107,42 @@ export const handler = async (event) => {
       statusCode: err.status || 500,
       body: JSON.stringify({ error: err.message || "Internal Server Error" }),
     };
+  }
+};
+
+/**
+ * 3. CLOUDFLARE WORKERS: Default Fetch Export
+ */
+export const fetch = async (request, env) => {
+  // CORS Pre-flight for Workers
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+
+  if (request.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
+  try {
+    const payload = await request.json();
+    const result = await executeSubmission(payload, env);
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { 
+        "Content-Type": "application/json", 
+        "Access-Control-Allow-Origin": "*" 
+      },
+    });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message || "Worker Error" }), {
+      status: err.status || 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+    });
   }
 };

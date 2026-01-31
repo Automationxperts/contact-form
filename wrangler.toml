@@ -1,0 +1,7 @@
+name = "github-submit"
+main = "api/github-submit.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+# You'll set your IDs and GH keys via the Cloudflare Dashboard 
+# or 'wrangler secret put'
