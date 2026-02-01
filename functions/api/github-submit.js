@@ -1,6 +1,6 @@
 /**
  * Project: GitConnect Unified Backend (AutomationExpert Factory)
- * Platforms: Netlify, Vercel, & Cloudflare Workers
+ * Platforms: Netlify, Vercel, & Cloudflare Pages
  * © 2026 Automation Expert. All rights reserved.
  */
 
@@ -8,12 +8,10 @@ import { createAppAuth } from "@octokit/auth-app";
 
 /**
  * CORE LOGIC: Agnostic of the hosting platform
- * Now takes 'env' as an argument to support Cloudflare's architecture.
  */
 async function executeSubmission(payload, env) {
   const { type, body, name, email } = payload;
   
-  // Mapping frontend keys to Environment Variables
   const discussionId = {
     general: env.ID_GENERAL,
     feature: env.ID_FEATURE,
@@ -25,7 +23,6 @@ async function executeSubmission(payload, env) {
     throw { status: 400, message: "Invalid input or missing configuration." };
   }
 
-  // 1. GitHub App Auth
   const auth = createAppAuth({
     appId: env.GH_APP_ID,
     privateKey: env.GH_PRIVATE_KEY.replace(/\\n/g, "\n"),
@@ -33,17 +30,14 @@ async function executeSubmission(payload, env) {
   });
 
   const { token } = await auth({ type: "installation" });
-
-  // 2. Build Content
   const commentBody = `**Name:** ${name}\n**Email:** ${email}\n**Type:** ${type}\n**Message:**\n${body}`.trim();
 
-  // 3. GraphQL Mutation
   const response = await fetch("https://api.github.com/graphql", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      "User-Agent": "AutomationExpert-Factory-Worker" // Required for Cloudflare/GitHub compatibility
+      "User-Agent": "AutomationExpert-Factory"
     },
     body: JSON.stringify({
       query: `
@@ -63,12 +57,10 @@ async function executeSubmission(payload, env) {
   return { success: true, url: result.data.addDiscussionComment.comment.url };
 }
 
-/* -------------------------------------------------------------------------- */
-/* PLATFORM HANDLERS                                                          */
-/* -------------------------------------------------------------------------- */
+/* -------------------- PLATFORM HANDLERS -------------------- */
 
 /**
- * 1. VERCEL: Default Export
+ * 1. VERCEL (Default Export)
  */
 export default async function vercelHandler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -82,15 +74,17 @@ export default async function vercelHandler(req, res) {
     const result = await executeSubmission(req.body || {}, process.env);
     return res.status(200).json(result);
   } catch (err) {
-    console.error("Vercel Error:", err);
     return res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
   }
 }
 
 /**
- * 2. NETLIFY: Named Export 'handler'
+ * 2. NETLIFY (Named Export)
  */
 export const handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 204, headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type" } };
+  }
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
 
   try {
@@ -102,7 +96,6 @@ export const handler = async (event) => {
       body: JSON.stringify(result),
     };
   } catch (err) {
-    console.error("Netlify Error:", err);
     return {
       statusCode: err.status || 500,
       body: JSON.stringify({ error: err.message || "Internal Server Error" }),
@@ -111,24 +104,10 @@ export const handler = async (event) => {
 };
 
 /**
- * 3. CLOUDFLARE WORKERS: Default Fetch Export
+ * 3. CLOUDFLARE PAGES (Specific Export)
  */
-export const fetch = async (request, env) => {
-  // CORS Pre-flight for Workers
-  if (request.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type",
-      },
-    });
-  }
-
-  if (request.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
-
+export const onRequestPost = async (context) => {
+  const { request, env } = context;
   try {
     const payload = await request.json();
     const result = await executeSubmission(payload, env);
@@ -137,12 +116,24 @@ export const fetch = async (request, env) => {
       headers: { 
         "Content-Type": "application/json", 
         "Access-Control-Allow-Origin": "*" 
-      },
+      }
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message || "Worker Error" }), {
+    return new Response(JSON.stringify({ error: err.message || "Worker Error" }), { 
       status: err.status || 500,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: { "Access-Control-Allow-Origin": "*" }
     });
   }
+};
+
+// Handle OPTIONS for Cloudflare Pages
+export const onRequestOptions = async () => {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
 };
