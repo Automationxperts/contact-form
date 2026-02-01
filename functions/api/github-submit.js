@@ -4,7 +4,8 @@
  * © 2026 Automation Expert. All rights reserved.
  */
 
-import { createAppAuth } from "@octokit/auth-app";
+// import { createAppAuth } from "@octokit/auth-app";
+import { createAppAuth } from "https://esm.sh/@octokit/auth-app@7.1.1";
 
 /**
  * CORE LOGIC: Agnostic of the hosting platform
