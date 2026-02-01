@@ -1,14 +1,19 @@
 {
-  "name": "github-discussion-contact",
-  "version": "1.0.0",
-  "description": "Contact form backend using GitHub App Installations",
+  "name": "git-forms",
+  "version": "3.0.0",
+  "description": "Unified Contact form backend (Vercel, Netlify, Cloudflare)",
   "type": "module",
-  "main": "index.js",
+  "main": "api/github-submit.js",
+  "scripts": {
+    "build": "echo 'No frontend build needed'",
+    "install-deps": "npm install"
+  },
   "dependencies": {
-    "@octokit/auth-app": "^7.1.1",
-    "@octokit/rest": "^21.0.0",
+    "@octokit/auth-app": "^7.1.1"
+  },
+  "devDependencies": {
     "netlify-cli": "^23.14.0",
-    "node-fetch": "^3.3.2"
+    "wrangler": "^3.101.0"
   },
   "author": "Automation Expert",
   "license": "All rights reserved"
