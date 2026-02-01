@@ -5,7 +5,8 @@
  */
 
 // We use the full ESM URL to bypass the local build/dependency issues entirely.
-import { createAppAuth } from "https://esm.sh/@octokit/auth-app@7.1.1";
+// import { createAppAuth } from "https://esm.sh/@octokit/auth-app@7.1.1";
+import { createAppAuth } from "@octokit/auth-app";
 
 /**
  * CORE LOGIC

@@ -3,8 +3,10 @@
   "version": "3.0.0",
   "description": "Contact form backend - Cloudflare Pages Edition",
   "type": "module",
+  "dependencies": {
+    "@octokit/auth-app": "^7.1.1"
+  },
   "devDependencies": {
-    "@octokit/auth-app": "^7.1.1",
     "wrangler": "^3.101.0"
   },
   "scripts": {
