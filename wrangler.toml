@@ -1,4 +1,5 @@
 name = "github-submit"
+pages_build_output_dir = "."
 main = "api/github-submit.js"
 compatibility_date = "2026-01-01"
 
