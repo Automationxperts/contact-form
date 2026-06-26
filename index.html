@@ -97,6 +97,101 @@
         </section>
     </main>
 
+    <!-- DeepSeek Chat Widget Widget -->
+<div id="chat-container" style="position: fixed; bottom: 20px; right: 20px; font-family: system-ui, sans-serif; z-index: 9999;">
+  <div id="chat-box" style="display: none; width: 340px; height: 450px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); flex-direction: column; overflow: hidden; margin-bottom: 12px;">
+    <div style="background: #0066ff; color: #fff; padding: 16px; font-weight: 600;">AI Support Assistant</div>
+    <div id="chat-messages" style="flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;"></div>
+    <div style="display: flex; border-top: 1px solid #e2e8f0; padding: 8px; background: #f8fafc;">
+      <input type="text" id="chat-input" placeholder="Type a message..." style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+      <button id="chat-send" style="margin-left: 8px; background: #0066ff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Send</button>
+    </div>
+  </div>
+  <button id="chat-toggle" style="float: right; background: #0066ff; color: white; border: none; width: 56px; height: 56px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 14px rgba(0,102,255,0.4);">💬</button>
+</div>
+
+<script>
+  const toggleBtn = document.getElementById('chat-toggle');
+  const chatBox = document.getElementById('chat-box');
+  const chatMessages = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+
+  // Maintain conversational context history
+  let contextHistory = [{ role: "system", content: "You are a helpful website assistant." }];
+
+  // Toggle chat widget visibility
+  toggleBtn.addEventListener('click', () => {
+    chatBox.style.display = chatBox.style.display === 'none' ? 'flex' : 'none';
+  });
+
+  // Handle message submission
+  async function handleSend() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    // Append user message
+    appendMessage(text, 'user');
+    chatInput.value = '';
+    contextHistory.push({ role: "user", content: text });
+
+    // Append typing placeholder
+    const loadingId = appendMessage("Thinking...", 'bot');
+
+    try {
+      // Call your local serverless route safely
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: contextHistory })
+      });
+      
+      const data = await res.json();
+      document.getElementById(loadingId).remove();
+
+      if (data.error) throw new Error(data.error);
+
+      const reply = data.choices[0].message.content;
+      appendMessage(reply, 'bot');
+      contextHistory.push({ role: "assistant", content: reply });
+
+    } catch (err) {
+      document.getElementById(loadingId).innerText = "Error getting response. Please try again.";
+      console.error(err);
+    }
+  }
+
+  function appendMessage(text, sender) {
+    const msg = document.createElement('div');
+    const id = 'msg-' + Date.now();
+    msg.id = id;
+    msg.style.padding = '10px 14px';
+    msg.style.borderRadius = '8px';
+    msg.style.maxWidth = '85%';
+    msg.style.fontSize = '14px';
+    msg.style.lineHeight = '1.4';
+    
+    if (sender === 'user') {
+      msg.style.background = '#e0f2fe';
+      msg.style.color = '#0369a1';
+      msg.style.alignSelf = 'flex-end';
+    } else {
+      msg.style.background = '#f1f5f9';
+      msg.style.color = '#1e293b';
+      msg.style.alignSelf = 'flex-start';
+    }
+    
+    msg.innerText = text;
+    chatMessages.appendChild(msg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return id;
+  }
+
+  chatSend.addEventListener('click', handleSend);
+  chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
+</script>
+    
+
     <footer>
         <p>&copy; 2026 Automation Expert. All rights reserved.</p>
         <p style="font-size: 0.8rem; margin-top: 10px;">Powered by <a href="https://flexboxpro.netlify.app" style="color: var(--brand-blue); text-decoration: none;">FlexboxPro Architecture</a></p>
