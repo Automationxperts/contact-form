@@ -1,14 +1,24 @@
 [build]
-  publish = "."
-  # Explicitly point to the folder where github-submit.js lives
-  functions = "api" 
+  publish = "public"
+  # Functions live in api/ so the same file also works as a Vercel function.
+  functions = "api"
 
 [functions]
   node_bundler = "esbuild"
+  # Bundle the shared backend logic that api/github-submit.js imports.
+  included_files = ["lib/**"]
 
 [[redirects]]
-  # This maps the frontend call to the internal Netlify function path
+  # Maps the frontend's /api/github-submit call to the Netlify function path.
   from = "/api/github-submit"
   to = "/.netlify/functions/github-submit"
   status = 200
   force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
