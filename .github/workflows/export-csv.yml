@@ -1,81 +1,110 @@
-name: "Sync Submissions to CSV"
+name: Export submissions to CSV
+
+# Appends every new contact-form submission to data/submissions.csv.
+#
+# Security notes:
+#   - The comment body is untrusted, publicly submitted input. It is read from
+#     the event payload inside actions/github-script (JavaScript), never
+#     interpolated into a shell command via ${{ ... }}.
+#   - Values are CSV-quoted and formula-injection guarded before being written.
+#   - Only comments authored by the GitHub App bot are processed.
+#   - Emails are masked unless the repo variable EXPORT_INCLUDE_EMAIL is 'true'.
+#     Do NOT enable that in a public repository.
 
 on:
     workflow_dispatch:
-
     discussion_comment:
         types: [created]
 
+permissions:
+    contents: write
+
+concurrency:
+    group: export-csv
+    cancel-in-progress: false
+
 jobs:
-    append_to_csv:
+    append:
+        # Skip anything a human typed directly into the discussion thread.
+        if: github.event_name == 'workflow_dispatch' || github.event.comment.user.type == 'Bot'
         runs-on: ubuntu-latest
-        permissions:
-            contents: write
 
         steps:
-            - name: Checkout Repository
+            - name: Check out repository
               uses: actions/checkout@v4
 
-            - name: Extract Comment Data
-              id: extract
-              shell: bash
+            - name: Append submission row
+              id: append
+              uses: actions/github-script@v7
+              env:
+                  INCLUDE_EMAIL: ${{ vars.EXPORT_INCLUDE_EMAIL }}
+              with:
+                  script: |
+                      const fs = require('node:fs');
+                      const path = require('node:path');
+
+                      const comment = context.payload.comment;
+                      if (!comment) {
+                        core.info('No comment payload (manual run) — nothing to append.');
+                        core.setOutput('changed', 'false');
+                        return;
+                      }
+
+                      const body = String(comment.body || '');
+
+                      const field = (label) => {
+                        const match = body.match(new RegExp(`^\\*\\*${label}:\\*\\*\\s*(.*)$`, 'm'));
+                        return match ? match[1].trim() : '';
+                      };
+
+                      // The message is written inside a fenced block by lib/validate.js.
+                      const fenced = body.match(/\*\*Message:\*\*\s*\n+(`{3,})\n([\s\S]*?)\n\1/);
+                      const message = fenced ? fenced[2] : '';
+
+                      // Submitter emails are personal data. In a public repository they
+                      // are masked unless the repo variable EXPORT_INCLUDE_EMAIL is 'true'.
+                      const mask = (email) => {
+                        const [user, domain] = email.split('@');
+                        return user && domain ? `${user.slice(0, 2)}***@${domain}` : '';
+                      };
+                      const rawEmail = field('Email');
+                      const email = process.env.INCLUDE_EMAIL === 'true' ? rawEmail : mask(rawEmail);
+
+                      // Neutralise spreadsheet formula injection (=, +, -, @, tab, CR).
+                      const deFormula = (value) => (/^[=+\-@\t\r]/.test(value) ? `'${value}` : value);
+                      const csv = (value) =>
+                        `"${deFormula(String(value).replace(/\r?\n/g, ' ').trim()).replace(/"/g, '""')}"`;
+
+                      const row = [
+                        comment.created_at,
+                        field('Type') || 'unknown',
+                        field('Name'),
+                        email,
+                        field('Subject'),
+                        message || 'No message content',
+                        comment.node_id,
+                      ].map(csv).join(',');
+
+                      const file = path.join('data', 'submissions.csv');
+                      fs.mkdirSync('data', { recursive: true });
+                      if (!fs.existsSync(file)) {
+                        fs.writeFileSync(file, 'Date,Type,Name,Email,Subject,Message,CommentId\n');
+                      }
+
+                      // The comment node id makes re-runs idempotent.
+                      if (fs.readFileSync(file, 'utf8').includes(comment.node_id)) {
+                        core.info('Submission already recorded.');
+                        core.setOutput('changed', 'false');
+                        return;
+                      }
+
+                      fs.appendFileSync(file, `${row}\n`);
+                      core.setOutput('changed', 'true');
+
+            - name: Commit and push
+              if: steps.append.outputs.changed == 'true'
               run: |
-                  # Capture raw body (maintaining newlines)
-                  BODY="${{ github.event.comment.body }}"
-                  CREATED_AT="${{ github.event.comment.created_at }}"
-
-                  # 1. Extract Name: Look for text between Name: and Email:
-                  NAME=$(echo "$BODY" | sed -n 's/^\*\*Name:\*\*[[:space:]]*//p' | xargs)
-
-                  # Extract Email
-                  EMAIL=$(echo "$BODY" \
-                    | sed -n 's/^\*\*Email:\*\*[[:space:]]*//p' \
-                    | xargs)
-
-                  # Extract Type
-                  TYPE=$(echo "$BODY" \
-                    | sed -n 's/^\*\*Type:\*\*[[:space:]]*//p' \
-                    | xargs)
-
-                  # Extract Message (multi-line safe)
-                  MSG=$(echo "$BODY" \
-                    | sed -n '/^\*\*Message:\*\*/,$p' \
-                    | tail -n +2)
-
-                  # 4. Fallback: If Message is still empty, set a default
-                  [ -z "$MSG" ] && MSG="No message content"
-                  [ -z "$TYPE" ] && TYPE="unknown"
-
-                  # 5. CSV sanitization: Replace commas with semicolons for CSV safety
-                  SAFE_NAME=$(echo "$NAME" | tr ',' ';')
-                  SAFE_TYPE=$(echo "$TYPE" | tr ',' ';')
-                  SAFE_MSG=$(echo "$MSG" | tr ',' ';')
-
-                  # Output
-                  echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
-                  echo "email=$EMAIL" >> $GITHUB_OUTPUT
-                  echo "name=$SAFE_NAME" >> $GITHUB_OUTPUT
-                  echo "type=$SAFE_TYPE" >> "$GITHUB_OUTPUT"
-                  echo "msg=$SAFE_MSG" >> $GITHUB_OUTPUT
-
-            - name: Update CSV File
-              run: |
-                  FILE="data/contact-form-submissions.csv"
-                  mkdir -p data
-
-                  # Create header if file is new
-                  if [ ! -f "$FILE" ]; then
-                    echo "Date,Email,Name,Type,Message" > "$FILE"
-                  fi
-
-                  # Append formatted row
-                  echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.name }},${{ steps.extract.outputs.type }},${{ steps.extract.outputs.msg }}" >> "$FILE"
-
-            - name: Commit and Push Changes
-              run: |
-                  FILE="data/contact-form-submissions.csv"
-                  git config --global user.name "GitConnect Bot"
-                  git config --global user.email "bot@automationexpert.us.kg"
-                  git add $FILE
-                  # Prevent error if nothing changed
-                  git diff --quiet && git diff --staged --quiet || (git commit -m "auto: log entry from ${{ steps.extract.outputs.email }}" && git push)
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git add data/submissions.csv
+                  git diff --staged --quiet || (git commit -m "chore: record contact form submission" && git push)
