@@ -1,18 +1,47 @@
 {
-  "name": "git-forms",
-  "version": "3.0.0",
-  "description": "Contact form backend - Cloudflare Pages Edition",
+  "name": "gitconnect-contact-form",
+  "version": "1.0.0",
+  "description": "Free, open-source contact form for static sites. Submissions land in GitHub Discussions — no database, no vendor lock-in. Runs on Cloudflare Pages, Netlify and Vercel.",
+  "keywords": [
+    "contact-form",
+    "static-site",
+    "serverless",
+    "github-discussions",
+    "github-app",
+    "cloudflare-pages",
+    "netlify",
+    "vercel",
+    "jamstack"
+  ],
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Automationxperts/contact-form.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Automationxperts/contact-form/issues"
+  },
+  "homepage": "https://github.com/Automationxperts/contact-form#readme",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@octokit/auth-app": "^7.1.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
     "wrangler": "^3.101.0"
   },
   "scripts": {
-    "dev": "wrangler pages dev .",
-    "deploy": "wrangler pages deploy ."
-  },
-  "author": "Automation Expert",
-  "license": "All rights reserved"
+    "dev": "wrangler pages dev public",
+    "dev:netlify": "netlify dev",
+    "dev:vercel": "vercel dev",
+    "deploy": "wrangler pages deploy public",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "node --test \"test/**/*.test.js\""
+  }
 }
