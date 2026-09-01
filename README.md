@@ -51,7 +51,7 @@ git clone https://github.com/Automationxperts/contact-form.git
 cd contact-form
 npm install
 cp .env.example .env.local   # fill in your GitHub App credentials
-npm run dev                  # http://localhost:8788
+npm run dev                  # http://localhost:8788 or any other port configured
 ```
 
 Then:
